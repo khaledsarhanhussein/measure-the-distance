@@ -1,0 +1,247 @@
+#include "stdint.h"
+#include "tm4c123gh6pm.h"
+#include <time.h>
+void SystemInit (){}
+	//intialization
+	void init(void)
+	{
+		int  dummy;
+	  SYSCTL_RCGCGPIO_R |= 0x2B;
+		dummy=1;
+		dummy=2;
+		GPIO_PORTA_LOCK_R=0x4C4F434B ;
+		GPIO_PORTA_CR_R = 252;
+    GPIO_PORTB_LOCK_R=0x4C4F434B ;
+		GPIO_PORTB_CR_R = 0xFF;
+   // GPIO_PORTD_LOCK_R=0x4C4F434B ;
+	 // GPIO_PORTD_CR_R = 0xFF;
+		GPIO_PORTF_LOCK_R=0x4C4F434B ;
+		GPIO_PORTF_CR_R = 0x03;
+		
+		GPIO_PORTF_DIR_R  = 0xFE;//sw2 ip
+		GPIO_PORTF_AFSEL_R = 0;//no af for bit 0
+		GPIO_PORTF_DEN_R |=0x03;//den for bit0
+		GPIO_PORTF_PUR_R |= 0x01; //0=on=press 1=off=nopress
+		GPIO_PORTF_AMSEL_R = 0;
+		
+		GPIO_PORTA_DIR_R = 188; //bit 7 output to trigger rest to first 7-seg  & bit 6 input for echo and pins from 2-5 is for decoder 1 for seven segment 1
+		GPIO_PORTA_AMSEL_R = 0;
+		GPIO_PORTA_AFSEL_R = 0;
+		GPIO_PORTA_DEN_R |=0xFF;
+		
+		GPIO_PORTB_DIR_R |=0xFF;//bits from  0 to 3 for seven seg 2 from 4 to 7 to seven seg 3 
+		GPIO_PORTB_AFSEL_R = 0;
+		GPIO_PORTB_DEN_R = 0xFF;
+		GPIO_PORTB_AMSEL_R = 0x00;
+		
+		/*GPIO_PORTD_DIR_R |=0xFF;
+		GPIO_PORTD_AFSEL_R &=0x00;
+		GPIO_PORTD_DEN_R |=0xFF;
+		GPIO_PORTD_AMSEL_R  &=0x00;*/
+	}
+	void systic_init(void)
+{
+	NVIC_ST_CTRL_R = 0;
+	NVIC_ST_RELOAD_R = 0x00FFFFFF; //to check
+	NVIC_ST_CURRENT_R = 0;
+	NVIC_ST_CTRL_R = 5;
+}
+	void delay (void)
+	{
+		NVIC_ST_RELOAD_R =160; //10MICRO
+		NVIC_ST_CURRENT_R =0;
+		while((NVIC_ST_CTRL_R & 0x00010000) == 0)
+			{}
+	}
+
+	void wait(void)
+	{
+		NVIC_ST_RELOAD_R =15; //1MICRO
+		NVIC_ST_CURRENT_R =0;
+		while((NVIC_ST_CTRL_R & 0x00010000) == 0)
+			{}
+	}
+	
+	int main()
+	{
+		
+		
+		//dec
+		 
+		volatile int flag;
+		volatile int  first,second,third;
+		volatile double  distance,time;
+		int speed=34000;
+		//init
+		init();
+		systic_init();
+		//processing
+
+		while (1)
+		{
+			time=0;
+			GPIO_PORTA_CR_R = 252;
+			flag=0;
+			
+			if ((GPIO_PORTF_DATA_R &0x01)==0)
+			{
+					
+				GPIO_PORTA_DATA_R |=128;
+				delay ();//10micro
+				GPIO_PORTA_DATA_R &=127;
+				  while (1)
+					{
+						if ((GPIO_PORTA_DATA_R&64) ==64)
+						{
+						while ((GPIO_PORTA_DATA_R&64) == 64)
+						{
+							wait ();
+							time=time+1;
+						}
+							flag=1;
+					  }	
+						if (flag==1)
+							break;
+				  }
+				
+				GPIO_PORTA_CR_R = 188;
+					time = time/1000000.0;
+					
+				distance=time*speed;
+				distance=distance/2;
+					distance=distance*6.2;
+				first=distance/100;
+				distance=distance-(first*100);
+				second=distance/10;
+				distance=distance-(second*10);
+				third=distance;
+					GPIO_PORTA_DATA_R =0;
+					GPIO_PORTB_DATA_R=0;
+							if (first==0)
+				{
+								GPIO_PORTA_DATA_R =0;
+				}
+								else if (first==1)
+				{
+										GPIO_PORTA_DATA_R=4;
+				}
+								else if (first==2)
+				{
+										GPIO_PORTA_DATA_R=8;
+				}
+								else if (first==3)
+				{
+										GPIO_PORTA_DATA_R=12;
+				}
+								else if (first==4)
+				{
+										GPIO_PORTA_DATA_R=16;
+				}
+								else if (first==5)
+				{
+										GPIO_PORTA_DATA_R=20;
+				}
+								else if (first==6)
+				{
+										GPIO_PORTA_DATA_R=24;
+				}
+								else if (first==7)
+				{
+										GPIO_PORTA_DATA_R=28;
+				}
+								else if (first==8)
+				{
+										GPIO_PORTA_DATA_R=32;
+				}
+								else if (first==9)
+				{
+										GPIO_PORTA_DATA_R=36;
+				}
+				
+				first=second;
+							if (first==0)
+				{
+										GPIO_PORTB_DATA_R=0;
+				}
+								else if (first==1)
+				{
+								    GPIO_PORTB_DATA_R=1;
+				}
+								else if (first==2)
+				{
+										GPIO_PORTB_DATA_R=2;
+				}
+								else if (first==3)
+				{
+										GPIO_PORTB_DATA_R=3;
+				}
+								else if (first==4)
+				{
+										GPIO_PORTB_DATA_R=4;
+				}
+								else if (first==5)
+				{
+										GPIO_PORTB_DATA_R=5;
+				}
+								else if (first==6)
+				{
+										GPIO_PORTB_DATA_R=6;
+				}
+								else if (first==7)
+				{
+										GPIO_PORTB_DATA_R=7;
+				}
+								else if (first==8)
+				{
+										GPIO_PORTB_DATA_R=8;
+				}
+								else if (first==9)
+				{
+										GPIO_PORTB_DATA_R=9;
+				}	
+					
+				first=third;
+							if (first==0)
+				{
+										GPIO_PORTB_DATA_R|=0;
+				}
+								else if (first==1)
+				{
+										GPIO_PORTB_DATA_R|=16;
+				}
+								else if (first==2)
+				{
+										GPIO_PORTB_DATA_R|=32;
+				}
+								else if (first==3)
+				{
+										GPIO_PORTB_DATA_R|=48;
+				}
+								else if (first==4)
+				{
+										GPIO_PORTB_DATA_R|=64;
+				}
+								else if (first==5)
+				{
+										GPIO_PORTB_DATA_R|=80;
+				}
+								else if (first==6)
+				{
+										GPIO_PORTB_DATA_R|=96;
+				}
+								else if (first==7)
+				{
+										GPIO_PORTB_DATA_R|=112;
+				}
+								else if (first==8)
+				{
+										GPIO_PORTB_DATA_R|=128;
+				}
+								else if (first==9)
+				{
+										GPIO_PORTB_DATA_R|=144;
+				}	
+				
+			}	
+		}
+	}
